@@ -844,7 +844,7 @@ if st.session_state.full_draws:
                                             {data.get('risk_note', '')}
                                         </div>
                                         """, unsafe_allow_html=True)
-    # ------------------------------------------
+        # ------------------------------------------
     # TAB 3: OMNI-CHAIN ENGINE (Auto/Custom)
     # ------------------------------------------
     with tab_chain:
@@ -859,14 +859,15 @@ if st.session_state.full_draws:
             with c2: chain_span1 = st.number_input("၂။ စောင့်ကြည့်မည့် ပွဲစဉ် (Secondary Window):", min_value=1, max_value=30, value=10)
 
             c3, c4 = st.columns(2)
-            # 🔴 Auto Search Range for Target Step
             with c3: chain_max_target_step = st.number_input("၃။ Auto ရှာမည့် အများဆုံး Target Step:", min_value=1, max_value=20, value=5)
             with c4: chain_recent_limit = st.number_input("၄။ ရေစီးကြောင်း အကြိမ်ရေ (Trend Hits):", min_value=3, max_value=50, value=5)
 
-            # 🔴 STRICT FILTERS: To reduce noise and output exact matches only
             c5, c6 = st.columns(2)
             with c5: cluster_size = st.number_input("၅။ Cluster အုပ်စု အရွယ်အစား (Top N):", min_value=1, max_value=15, value=10)
             with c6: max_final_kwek = st.number_input("၆။ အများဆုံး ပြသရမည့် ဒဲ့ကွက် (Filter):", min_value=1, max_value=10, value=5)
+
+            # 🔴 [NEW] ရက်ချိန်းပြည့် (Live Signal) များကိုသာ ပြရန် Filter
+            show_only_live = st.checkbox("🔥 ယခုပွဲစဉ်အတွက် ရက်ချိန်းပြည့် (Live Signals) ရှိသော ကွင်းဆက်များကိုသာ ပြရန် (ဂဏန်းမဖောင်းပွစေရန်)", value=True)
 
             submit_chain = st.form_submit_button("ကွင်းဆက်ကို ရှာဖွေမည် 🚀")
 
@@ -920,7 +921,6 @@ if st.session_state.full_draws:
 
                     recent_chains = valid_chains[-chain_recent_limit:]
                     
-                    # 🔴 [NEW] Auto Loop Target Steps (1 to max_target_step)
                     best_steps_data = []
                     for check_step in range(1, chain_max_target_step + 1):
                         target_draws = []
@@ -936,8 +936,11 @@ if st.session_state.full_draws:
 
                         final_unique_hits = list(set(target_draws))
                         
-                        # 🔴 [STRICT FILTER] Must be <= max_final_kwek (No more messy results!)
                         if final_unique_hits and len(final_unique_hits) <= max_final_kwek:
+                            # 🔴 [FIX] ရက်ချိန်းပြည့် သီးသန့်ပြရန် စစ်ထုတ်ခြင်း
+                            if show_only_live and not active_signal:
+                                continue 
+                                
                             best_steps_data.append({
                                 "step": check_step,
                                 "hits": final_unique_hits,
@@ -989,7 +992,8 @@ if st.session_state.full_draws:
 """, unsafe_allow_html=True)
 
                 if not found_any_chain:
-                    st.info("⚠️ သတ်မှတ်ထားသော (ကွက်ရေ ကန့်သတ်ချက်) နှင့် 100% ကိုက်ညီသော ကွင်းဆက်များ မတွေ့ပါ။ 'ရေစီးကြောင်း အကြိမ်ရေ' ကို လျှော့ချခြင်း သို့မဟုတ် 'အများဆုံး ပြသရမည့် ဒဲ့ကွက်' ကို တိုး၍ ပြန်စမ်းပါ။")
+                    if show_only_live:
+                        st.info("⚠️ ယခုအချိန်တွင် ရက်ချိန်းပြည့် (Live Signal) အသက်ဝင်နေသော ကွင်းဆက်များ မတွေ့ရှိပါ။ (သမိုင်းကြောင်း အဟောင်းများကို ကြည့်လိုပါက Checkbox ကို ဖြုတ်၍ ရှာပါ)")
+                    else:
+                        st.info("⚠️ သတ်မှတ်ထားသော (ကွက်ရေ ကန့်သတ်ချက်) နှင့် 100% ကိုက်ညီသော ကွင်းဆက်များ မတွေ့ပါ။")
 
-else:
-    st.info("စတင်ရန်အတွက် Bro ရဲ့ 2D CSV သို့မဟုတ် Excel ဒေတာဖိုင်ကို အပေါ်တွင် တင်ပေးပါ။")
