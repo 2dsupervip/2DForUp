@@ -844,7 +844,6 @@ if st.session_state.full_draws:
                                             {data.get('risk_note', '')}
                                         </div>
                                         """, unsafe_allow_html=True)
-
     # ------------------------------------------
     # TAB 3: OMNI-CHAIN ENGINE (Auto/Custom)
     # ------------------------------------------
@@ -855,13 +854,19 @@ if st.session_state.full_draws:
             
             c1, c2 = st.columns(2)
             with c1: 
-                chain_anchor_count = st.number_input("📌 (Auto အတွက်) နောက်ကြောင်းပြန်မည့် ပွဲစဉ် (Anchor Count):", min_value=1, max_value=50, value=10)
-                chain_trigger_custom = st.text_input("🎯 (Custom အတွက်) အစပျိုး မူ (Primary Trigger):", value=f"{last_val if st.session_state.full_draws else '12'} PM သီးသန့်")
-            with c2: chain_span1 = st.number_input("၂။ စောင့်ကြည့်မည့် ပွဲစဉ် (Secondary Window):", min_value=1, max_value=20, value=10)
+                chain_anchor_count = st.number_input("📌 (Auto) နောက်ကြောင်းပြန်မည့် ပွဲစဉ် (Anchor Count):", min_value=1, max_value=50, value=10)
+                chain_trigger_custom = st.text_input("🎯 (Custom) အစပျိုး မူ (Primary Trigger):", value=f"{last_val if st.session_state.full_draws else '12'} PM သီးသန့်")
+            with c2: chain_span1 = st.number_input("၂။ စောင့်ကြည့်မည့် ပွဲစဉ် (Secondary Window):", min_value=1, max_value=30, value=10)
 
             c3, c4 = st.columns(2)
-            with c3: chain_target_step = st.number_input("၃။ တိကျသော နောက်ဆက်တွဲပွဲ (Target Step):", min_value=1, max_value=20, value=3)
-            with c4: chain_recent_limit = st.number_input("၄။ ရေစီးကြောင်း အကြိမ်ရေ (Trend Hits):", min_value=3, max_value=20, value=5)
+            # 🔴 Auto Search Range for Target Step
+            with c3: chain_max_target_step = st.number_input("၃။ Auto ရှာမည့် အများဆုံး Target Step:", min_value=1, max_value=20, value=5)
+            with c4: chain_recent_limit = st.number_input("၄။ ရေစီးကြောင်း အကြိမ်ရေ (Trend Hits):", min_value=3, max_value=50, value=5)
+
+            # 🔴 STRICT FILTERS: To reduce noise and output exact matches only
+            c5, c6 = st.columns(2)
+            with c5: cluster_size = st.number_input("၅။ Cluster အုပ်စု အရွယ်အစား (Top N):", min_value=1, max_value=15, value=10)
+            with c6: max_final_kwek = st.number_input("၆။ အများဆုံး ပြသရမည့် ဒဲ့ကွက် (Filter):", min_value=1, max_value=10, value=5)
 
             submit_chain = st.form_submit_button("ကွင်းဆက်ကို ရှာဖွေမည် 🚀")
 
@@ -899,7 +904,7 @@ if st.session_state.full_draws:
 
                     if not cluster_pool: continue
 
-                    top_cluster = [x[0] for x in Counter(cluster_pool).most_common(10)]
+                    top_cluster = [x[0] for x in Counter(cluster_pool).most_common(cluster_size)]
 
                     valid_chains = []
                     for h in t_hits:
@@ -914,43 +919,58 @@ if st.session_state.full_draws:
                         continue 
 
                     recent_chains = valid_chains[-chain_recent_limit:]
-                    target_draws = []
-                    active_signal = None
-
-                    for ch in recent_chains:
-                        target_idx = ch['cluster_idx'] + chain_target_step
-                        if target_idx < len(st.session_state.full_draws):
-                            target_draws.append(st.session_state.full_draws[target_idx]['draw'])
-                        else:
-                            rem_steps = target_idx - (len(st.session_state.full_draws) - 1)
-                            active_signal = {"cluster_val": ch['cluster_val'], "rem_steps": rem_steps}
-
-                    final_unique_hits = list(set(target_draws))
                     
-                    if final_unique_hits:
-                        found_any_chain = True
-                        
-                        badges_cluster = " ".join([f"<span class='badge-inline-hp' style='margin-bottom:8px;'>{n}</span>" for n in top_cluster])
-                        badges_final = " ".join([f"<span style='background-color:#E67E22; color:#FFFFFF; padding:4px 10px; border-radius:6px; font-size:16px; font-weight:bold; margin-right:5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>{n}</span>" for n in final_unique_hits])
+                    # 🔴 [NEW] Auto Loop Target Steps (1 to max_target_step)
+                    best_steps_data = []
+                    for check_step in range(1, chain_max_target_step + 1):
+                        target_draws = []
+                        active_signal = None
 
-                        card_header_color = "#e74c3c" if active_signal else "#3498db"
+                        for ch in recent_chains:
+                            target_idx = ch['cluster_idx'] + check_step
+                            if target_idx < len(st.session_state.full_draws):
+                                target_draws.append(st.session_state.full_draws[target_idx]['draw'])
+                            else:
+                                rem_steps = target_idx - (len(st.session_state.full_draws) - 1)
+                                active_signal = {"cluster_val": ch['cluster_val'], "rem_steps": rem_steps}
+
+                        final_unique_hits = list(set(target_draws))
                         
-                        with st.expander(f"⭐ [100% Omni-Chain] {trig_display} မှ အစပြုသော ကွင်းဆက်", expanded=True if active_signal else False):
-                            # 🔴 [FIXED] Indentation ပြဿနာကို ဖြေရှင်းထားပါသည် (Code block အစား HTML တိုက်ရိုက်ပေါ်စေရန်)
-                            st.markdown(f"""
+                        # 🔴 [STRICT FILTER] Must be <= max_final_kwek (No more messy results!)
+                        if final_unique_hits and len(final_unique_hits) <= max_final_kwek:
+                            best_steps_data.append({
+                                "step": check_step,
+                                "hits": final_unique_hits,
+                                "signal": active_signal
+                            })
+
+                    if best_steps_data:
+                        found_any_chain = True
+                        badges_cluster = " ".join([f"<span class='badge-inline-hp' style='margin-bottom:8px;'>{n}</span>" for n in top_cluster])
+                        
+                        for step_data in best_steps_data:
+                            final_hits = step_data["hits"]
+                            step_num = step_data["step"]
+                            signal = step_data["signal"]
+                            
+                            badges_final = " ".join([f"<span style='background-color:#E67E22; color:#FFFFFF; padding:4px 10px; border-radius:6px; font-size:16px; font-weight:bold; margin-right:5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>{n}</span>" for n in final_hits])
+                            card_header_color = "#e74c3c" if signal else "#3498db"
+                            
+                            with st.expander(f"⭐ [100% Chain] {trig_display} ➡️ {step_num} ပွဲမြောက် (ကွက်ရေ: {len(final_hits)})", expanded=True if signal else False):
+                                st.markdown(f"""
 <div class="card card-sniper" style="border-left-color: {card_header_color};">
     <div style="color:#00FFCC; font-size:16px; font-weight:bold; margin-bottom:10px;">
-        📌 ကွင်းဆက် အဆင့် (၁) - Auto Cluster (အလိုအလျောက် ရှာဖွေခြင်း)
+        📌 အဆင့် (၁) - Auto Cluster (Top {cluster_size})
     </div>
     <div style="color:#E0D5FA; margin-bottom:15px; line-height: 1.6;">
-        [<b>{trig_display}</b>] ထွက်ပြီး <b>({chain_span1})</b> ပွဲအတွင်း သမိုင်းတစ်လျှောက် အများဆုံး ဝင်လာလေ့ရှိသော (Top 10) ဂဏန်းများမှာ-<br>
+        [<b>{trig_display}</b>] ထွက်ပြီး <b>({chain_span1})</b> ပွဲအတွင်း လာလေ့ရှိသော အုပ်စု -<br>
         <div style="margin-top: 8px;">{badges_cluster}</div>
     </div>
     <div style="color:#00FFCC; font-size:16px; font-weight:bold; margin-bottom:10px; border-top: 1px dashed #4A3B69; padding-top:15px;">
-        🎯 ကွင်းဆက် အဆင့် (၂) - 100% Sniper Target
+        🎯 အဆင့် (၂) - Target Step (<b>{step_num}</b> ပွဲမြောက်)
     </div>
     <div style="color:#E0D5FA; margin-bottom:15px; line-height: 1.6;">
-        အထက်ပါ (Top 10) ကွက်မှ တစ်ခုခု ဝင်လာခဲ့လျှင် ထိုပွဲမှစ၍ ကွက်တိ <b>({chain_target_step})</b> ပွဲမြောက်တွင် ထွက်ခဲ့သော ဂဏန်းများ (လတ်တလော {chain_recent_limit} ကြိမ်ဆက်တိုက် 100% အတိအကျ မှန်ကန်နေသော ဒဲ့ကွက်များ):
+        ထိုအုပ်စုဝင်လာပြီး <b>({step_num})</b> ပွဲမြောက်တိုင်းတွင် (လတ်တလော {chain_recent_limit} ကြိမ်ဆက်တိုက်) ဤဂဏန်းများသာ 100% ထွက်ထားပါသည်:
     </div>
     <div>
         {badges_final}
@@ -958,18 +978,18 @@ if st.session_state.full_draws:
 </div>
 """, unsafe_allow_html=True)
 
-                            if active_signal:
-                                st.markdown(f"""
+                                if signal:
+                                    st.markdown(f"""
 <div style="background: rgba(230, 126, 34, 0.15); border-left: 5px solid #e67e22; padding: 20px; border-radius: 8px; margin-top:15px; border: 1px solid rgba(230, 126, 34, 0.3);">
-    <div style="color: #e67e22; font-size: 18px; font-weight: bold; margin-bottom: 8px;">🔥 LIVE SIGNAL (ယခုပွဲစဉ်အတွက် အသက်ဝင်နေပါသည်)</div>
+    <div style="color: #e67e22; font-size: 18px; font-weight: bold; margin-bottom: 8px;">🔥 LIVE SIGNAL (ယခုပွဲစဉ်အတွက်)</div>
     <div style="color: #E0D5FA; font-size: 15px; line-height: 1.6;">
-        လတ်တလောတွင် Cluster ဂဏန်း [<b>{active_signal['cluster_val']}</b>] ဝင်ရောက်ထားသောကြောင့် <b>{active_signal['rem_steps']}</b> ပွဲ အကြာတွင် အထက်ပါ {len(final_unique_hits)} ကွက်အား ထိုးရန် အသင့်ပြင်ထားပါ။
+        လတ်တလော Cluster [<b>{signal['cluster_val']}</b>] ဝင်ထား၍ <b>{signal['rem_steps']}</b> ပွဲ အကြာတွင် အထက်ပါ {len(final_hits)} ကွက်အား ထိုးရန် အသင့်ပြင်ပါ။
     </div>
 </div>
 """, unsafe_allow_html=True)
 
                 if not found_any_chain:
-                    st.info("⚠️ ယခုသတ်မှတ်ချက်များဖြင့် 100% ကိုက်ညီသော (Omni-Chain) ကွင်းဆက်များ မတွေ့ရှိသေးပါ။ အကြိမ်ရေ (Trend Hits) ကို လျှော့ချ၍ ပြန်လည်စမ်းသပ်ကြည့်ပါ။")
+                    st.info("⚠️ သတ်မှတ်ထားသော (ကွက်ရေ ကန့်သတ်ချက်) နှင့် 100% ကိုက်ညီသော ကွင်းဆက်များ မတွေ့ပါ။ 'ရေစီးကြောင်း အကြိမ်ရေ' ကို လျှော့ချခြင်း သို့မဟုတ် 'အများဆုံး ပြသရမည့် ဒဲ့ကွက်' ကို တိုး၍ ပြန်စမ်းပါ။")
 
 else:
     st.info("စတင်ရန်အတွက် Bro ရဲ့ 2D CSV သို့မဟုတ် Excel ဒေတာဖိုင်ကို အပေါ်တွင် တင်ပေးပါ။")
