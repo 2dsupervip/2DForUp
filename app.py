@@ -844,7 +844,8 @@ if st.session_state.full_draws:
                                             {data.get('risk_note', '')}
                                         </div>
                                         """, unsafe_allow_html=True)
-        # ------------------------------------------
+    
+    # ------------------------------------------
     # TAB 3: OMNI-CHAIN ENGINE (Auto/Custom)
     # ------------------------------------------
     with tab_chain:
@@ -866,7 +867,6 @@ if st.session_state.full_draws:
             with c5: cluster_size = st.number_input("၅။ Cluster အုပ်စု အရွယ်အစား (Top N):", min_value=1, max_value=15, value=10)
             with c6: max_final_kwek = st.number_input("၆။ အများဆုံး ပြသရမည့် ဒဲ့ကွက် (Filter):", min_value=1, max_value=10, value=5)
 
-            # 🔴 [NEW] ရက်ချိန်းပြည့် (Live Signal) များကိုသာ ပြရန် Filter
             show_only_live = st.checkbox("🔥 ယခုပွဲစဉ်အတွက် ရက်ချိန်းပြည့် (Live Signals) ရှိသော ကွင်းဆက်များကိုသာ ပြရန် (ဂဏန်းမဖောင်းပွစေရန်)", value=True)
 
             submit_chain = st.form_submit_button("ကွင်းဆက်ကို ရှာဖွေမည် 🚀")
@@ -878,21 +878,36 @@ if st.session_state.full_draws:
                 if "Auto Mode" in chain_mode:
                     active_pats = detect_active_patterns(st.session_state.day_pairs, chain_anchor_count)
                     for pat_search, pat_display in active_pats:
-                        trigger_list.append((pat_search, pat_display))
+                        # 🔴 [FIX] Display Name ပေါ်မူတည်ပြီး AM / PM သီးသန့် အတိအကျ ခွဲထုတ်ပေးခြင်း
+                        sess = "All"
+                        if "မနက်ပိုင်း" in pat_display: sess = "AM သီးသန့်"
+                        elif "ညနေပိုင်း" in pat_display: sess = "PM သီးသန့်"
+                        trigger_list.append((pat_search, pat_display, sess))
                     
                     recent_draws = st.session_state.full_draws[-chain_anchor_count:]
                     for d in recent_draws:
                         d_val, d_time = d['draw'], d['time']
-                        trigger_list.append((f"{d_val} {d_time} သီးသန့်", f"လတ်တလော အမာခံဂဏန်း ({d_val} {d_time})"))
+                        # 🔴 [FIX] အမာခံဂဏန်းများကိုလည်း သက်ဆိုင်ရာ အချိန် (AM/PM) အတိအကျဖြင့် ရှာဖွေစေခြင်း
+                        trigger_list.append((d_val, f"လတ်တလော အမာခံဂဏန်း ({d_val} {d_time})", f"{d_time} သီးသန့်"))
                         
                     trigger_list = list(set(trigger_list))
                 else:
-                    trigger_list = [(chain_trigger_custom.strip(), chain_trigger_custom.strip())]
+                    # 🔴 [FIX] Custom Mode တွင် AM / PM သီးသန့် ရိုက်ထည့်ပါက ခွဲခြားသိရှိနိုင်ရန်
+                    raw_trig = chain_trigger_custom.strip()
+                    sess = "All"
+                    if "AM သီးသန့်" in raw_trig: 
+                        sess = "AM သီးသန့်"
+                        raw_trig = raw_trig.replace("AM သီးသန့်", "").strip()
+                    elif "PM သီးသန့်" in raw_trig: 
+                        sess = "PM သီးသန့်"
+                        raw_trig = raw_trig.replace("PM သီးသန့်", "").strip()
+                    trigger_list = [(raw_trig, chain_trigger_custom.strip(), sess)]
 
                 found_any_chain = False
 
-                for trig_search, trig_display in trigger_list:
-                    t_hits, _ = get_custom_target_hits(trig_search, "All", st.session_state.full_draws, st.session_state.day_pairs)
+                for trig_search, trig_display, session_scope in trigger_list:
+                    # 🔴 [FIX] "All" အစား သက်ဆိုင်ရာ session_scope ကို Engine ဆီသို့ ထည့်သွင်းရှာဖွေခြင်း
+                    t_hits, _ = get_custom_target_hits(trig_search, session_scope, st.session_state.full_draws, st.session_state.day_pairs)
                     
                     if len(t_hits) < chain_recent_limit:
                         continue 
@@ -937,7 +952,6 @@ if st.session_state.full_draws:
                         final_unique_hits = list(set(target_draws))
                         
                         if final_unique_hits and len(final_unique_hits) <= max_final_kwek:
-                            # 🔴 [FIX] ရက်ချိန်းပြည့် သီးသန့်ပြရန် စစ်ထုတ်ခြင်း
                             if show_only_live and not active_signal:
                                 continue 
                                 
@@ -996,4 +1010,3 @@ if st.session_state.full_draws:
                         st.info("⚠️ ယခုအချိန်တွင် ရက်ချိန်းပြည့် (Live Signal) အသက်ဝင်နေသော ကွင်းဆက်များ မတွေ့ရှိပါ။ (သမိုင်းကြောင်း အဟောင်းများကို ကြည့်လိုပါက Checkbox ကို ဖြုတ်၍ ရှာပါ)")
                     else:
                         st.info("⚠️ သတ်မှတ်ထားသော (ကွက်ရေ ကန့်သတ်ချက်) နှင့် 100% ကိုက်ညီသော ကွင်းဆက်များ မတွေ့ပါ။")
-
