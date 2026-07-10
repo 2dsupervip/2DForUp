@@ -842,27 +842,27 @@ if st.session_state.full_draws:
                                         """, unsafe_allow_html=True)
 
     # ------------------------------------------
-    # TAB 3: AUTO-TUNED OMNI-CHAIN ENGINE (A ➡️ B ➡️ C)
+    # TAB 3: AUTO-TUNED OMNI-CHAIN ENGINE (Live Signals)
     # ------------------------------------------
     with tab_chain:
-        st.markdown("##### 🔗 Auto-Tuned Omni-Chain (A ➡️ B ➡️ C Intersection)")
+        st.markdown("##### 🔗 Auto-Tuned Omni-Chain (Live Signals Only)")
         with st.form("chain_reaction_form"):
-            chain_mode = st.radio("🔍 အစပျိုးစနစ် (Trigger Type) ရွေးချယ်ရန်:", ["🤖 Auto Mode (Deep Sniper ဖြင့် အလိုအလျောက်ရှာမည်)", "✍️ Custom Mode (မိမိစိတ်ကြိုက် အစပျိုးမည်)"])
+            chain_mode = st.radio("🔍 အစပျိုးစနစ် ရွေးချယ်ရန်:", ["🤖 Auto Mode (AI အလိုအလျောက်ရှာမည်)", "✍️ Custom Mode (မိမိစိတ်ကြိုက် အစပျိုးမည်)"])
             
             c1, c2 = st.columns(2)
             with c1: 
                 chain_anchor_count = st.number_input("📌 (Auto) နောက်ကြောင်းပြန်မည့် ပွဲစဉ် (Anchor):", min_value=1, max_value=50, value=10)
                 chain_trigger_custom = st.text_input("🎯 (Custom) အစပျိုး မူ (Primary Trigger A):", value=f"{last_val if st.session_state.full_draws else '12'} PM သီးသန့်")
             with c2: 
-                chain_span1 = st.number_input("၂။ 'B' အတွက် စောင့်ကြည့်မည့် ပွဲစဉ် (Span 1):", min_value=1, max_value=30, value=10)
-                chain_max_target_step = st.number_input("၃။ 'C' အတွက် Auto ရှာမည့် Target Step (Span 2):", min_value=1, max_value=20, value=5)
+                chain_span1 = st.number_input("၂။ B အတွက် စောင့်ကြည့်မည့် ပွဲစဉ် (Span 1):", min_value=1, max_value=30, value=10)
+                chain_max_target_step = st.number_input("၃။ C အတွက် ရှာမည့် အများဆုံး ပွဲစဉ် (Target Step):", min_value=1, max_value=20, value=5)
 
-            st.info("💡 AI သည် Trend 10 ကြိမ်မှ 5 ကြိမ်အထိ လည်းကောင်း၊ ကွက်ရေ 1 ကွက်မှ 5 ကွက်အထိ လည်းကောင်း အလိုအလျောက် (Auto-Tuning) ပြုလုပ်ပြီး အကောင်းဆုံး (1) စုံကိုသာ စစ်ထုတ်ပေးပါမည်။")
+            st.info("💡 AI သည် Trend အကြိမ်ရေ နှင့် ကွက်ရေ (အများဆုံး ၁၂ ကွက်အထိ) ကို အလိုအလျောက် ချိန်ညှိပြီး၊ ယခုပွဲစဉ်အတွက် အသက်ဝင်နေသော Live Signal များကိုသာ ပြသပေးပါမည်။")
             
-            submit_chain = st.form_submit_button("🔥 အကောင်းဆုံး Live Signal ကွင်းဆက်များကို ရှာမည် 🚀")
+            submit_chain = st.form_submit_button("🔥 ယခုပွဲစဉ် Live Signal များကို ရှာမည် 🚀")
 
         if submit_chain:
-            with st.spinner("🧠 ဉာဏ်ရည်တု အင်ဂျင်မှ Custom Ranked Path ဖြင့် အကျစ်လစ်ဆုံး ကွင်းဆက်များကို ရှာဖွေနေပါသည်..."):
+            with st.spinner("🧠 ဉာဏ်ရည်တု အင်ဂျင်မှ Custom Ranked Path ဖြင့် အကျစ်လစ်ဆုံး Live Signal များကို စစ်ထုတ်နေပါသည်..."):
                 trigger_list = []
                 
                 if "Auto Mode" in chain_mode:
@@ -880,6 +880,7 @@ if st.session_state.full_draws:
                         
                     trigger_list = list(set(trigger_list))
                 else:
+                    # Custom Mode ပြန်လည်ပါဝင်လာပါပြီ
                     raw_trig = chain_trigger_custom.strip()
                     sess = "All"
                     if "AM သီးသန့်" in raw_trig: 
@@ -890,15 +891,16 @@ if st.session_state.full_draws:
                         raw_trig = raw_trig.replace("PM သီးသန့်", "").strip()
                     trigger_list = [(raw_trig, chain_trigger_custom.strip(), sess)]
 
-                # 🔴 [NEW] Custom Ranked Priorities (Score = Trend*10 - Size*5)
+                # Rank priorities: Score = Trend*10 - Size*2 (Size up to 12 allowed)
                 priorities = []
-                for t in range(10, 4, -1):  # Trend from 10 down to 5
-                    for s in range(1, 6):   # Size from 1 up to 5
-                        score = (t * 10) - (s * 5)
+                for t in range(15, 4, -1):  
+                    for s in range(1, 13):   
+                        score = (t * 10) - (s * 2)
                         priorities.append({'trend': t, 'size': s, 'score': score})
                 priorities = sorted(priorities, key=lambda x: x['score'], reverse=True)
 
-                found_global_chain = False
+                live_signals_results = []
+                top_summary_pool = set()
 
                 for trig_search, trig_display, session_scope in trigger_list:
                     t_hits, _ = get_custom_target_hits(trig_search, session_scope, st.session_state.full_draws, st.session_state.day_pairs)
@@ -912,10 +914,9 @@ if st.session_state.full_draws:
                         size_req = p['size']
                         
                         if len(t_hits) < trend_req: continue 
-                        
                         recent_A = t_hits[-trend_req:]
                         
-                        # Step 1: Strict Intersection for B (Must hit in ALL trend_req windows)
+                        # --- Check for Type 1 (A ➡️ B Live Signal) ---
                         b_sets = []
                         for h in recent_A:
                             h_idx = h['index']
@@ -923,13 +924,35 @@ if st.session_state.full_draws:
                             b_sets.append(set(window))
                             
                         common_b = set.intersection(*b_sets)
-                        if not common_b: continue # Skip if no 100% target B exists
                         
-                        # Limit common_b to size_req by frequency
-                        b_flat = [d['draw'] for h in recent_A for d in st.session_state.full_draws[h['index'] + 1 : min(h['index'] + 1 + chain_span1, len(st.session_state.full_draws))] if d['draw'] in common_b]
-                        top_b = [x[0] for x in Counter(b_flat).most_common(size_req)]
+                        if common_b:
+                            b_flat = [d['draw'] for h in recent_A for d in st.session_state.full_draws[h['index'] + 1 : min(h['index'] + 1 + chain_span1, len(st.session_state.full_draws))] if d['draw'] in common_b]
+                            top_b = [x[0] for x in Counter(b_flat).most_common(size_req)]
+                            
+                            last_a_idx = recent_A[-1]['index']
+                            elapsed_b = (len(st.session_state.full_draws) - 1) - last_a_idx
+                            
+                            # If A just happened and B is due right now
+                            if 0 < elapsed_b <= chain_span1:
+                                already_hit_b = any(d['draw'] in top_b for d in st.session_state.full_draws[last_a_idx + 1 : len(st.session_state.full_draws)])
+                                if not already_hit_b:
+                                    b_str = " ".join(top_b)
+                                    msg = f"""
+<div style="background-color: #170E2B; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 6px solid #3498db; border-top: 1px solid #2D1B4E; border-right: 1px solid #2D1B4E; border-bottom: 1px solid #2D1B4E;">
+    <div style="color:#00FFCC; font-size:16px; font-weight:bold; margin-bottom:12px;">💎 100% Strict Chain [Rank Score: {p['score']}] | Trend: {trend_req} ကြိမ် | Size: {len(top_b)} ကွက်</div>
+    <div style="color:#E0D5FA; margin-bottom:12px; font-size:15px;"><b>A ➡️ B:</b> [{trig_display}] ထွက်ပြီးတိုင်း ({chain_span1}) ပွဲအတွင်း <span style="color:#FFD700; font-weight:bold;">{b_str}</span> ဒဲ့ 100%</div>
+    <div style="color:#e74c3c; font-weight:bold; margin-bottom:8px; font-size:15px;">🔥 LIVE SIGNAL (ယခုပွဲစဉ်ရက်ချိန်းပြည့်)</div>
+    <div style="color:#A294C7; font-size:14px;">လတ်တလော A ဝင်ထား၍ ယခုပွဲစဉ်တွင် အထက်ပါ {len(top_b)} ကွက်အား ထိုးပါ။</div>
+</div>
+"""
+                                    live_signals_results.append(msg)
+                                    top_summary_pool.update(top_b)
+                                    found_match_for_trigger = True
+                                    continue # Move to next trigger
+
+                        # --- Check for Type 2 (A ➡️ B ➡️ C Live Signal) ---
+                        if not common_b: continue
                         
-                        # Step 2: Track C from the FIRST occurrence of B in those windows
                         valid_chains = []
                         for h in recent_A:
                             h_idx = h['index']
@@ -940,7 +963,6 @@ if st.session_state.full_draws:
                                     
                         if len(valid_chains) < trend_req: continue
                         
-                        # Step 3: Check target steps for C (Strict Intersection)
                         for check_step in range(1, chain_max_target_step + 1):
                             target_draws = []
                             active_signal = None
@@ -955,41 +977,39 @@ if st.session_state.full_draws:
                                     
                             unique_c = list(set(target_draws))
                             
-                            # 🔴 MATCH CONDITION: C size must be <= size_req AND it MUST be an active LIVE SIGNAL!
-                            if unique_c and len(unique_c) <= size_req and active_signal:
-                                
+                            # Match condition: C size must be <= size_req AND it MUST be due RIGHT NOW (rem_steps == 1 or valid within window)
+                            if unique_c and len(unique_c) <= size_req and active_signal and active_signal['rem_steps'] > 0:
+                                b_str = " ".join(top_b)
+                                c_str = " ".join(unique_c)
+                                msg = f"""
+<div style="background-color: #170E2B; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 6px solid #e74c3c; border-top: 1px solid #2D1B4E; border-right: 1px solid #2D1B4E; border-bottom: 1px solid #2D1B4E;">
+    <div style="color:#00FFCC; font-size:16px; font-weight:bold; margin-bottom:12px;">💎 100% Strict Chain [Rank Score: {p['score']}] | Trend: {trend_req} ကြိမ် | Size: {len(unique_c)} ကွက်</div>
+    <div style="color:#E0D5FA; margin-bottom:8px; font-size:15px;"><b>A ➡️ B:</b> [{trig_display}] ထွက်ပြီးတိုင်း ({chain_span1}) ပွဲအတွင်း <span style="color:#FFD700;">{b_str}</span> ဒဲ့ 100%</div>
+    <div style="color:#E0D5FA; margin-bottom:12px; font-size:15px;"><b>B ➡️ C:</b> ထိုဂဏန်း ဝင်လာပြီး ({check_step}) ပွဲမြောက်တိုင်းတွင် <span style="color:#FFD700; font-weight:bold;">{c_str}</span> ဒဲ့ 100% ထွက်ထားပါသည် -</div>
+    <div style="color:#e74c3c; font-weight:bold; margin-bottom:8px; font-size:15px;">🔥 LIVE SIGNAL (ယခုပွဲစဉ်ရက်ချိန်းပြည့်)</div>
+    <div style="color:#A294C7; font-size:14px;">လတ်တလော B [{active_signal['b_val']}] ဝင်ထား၍ ယခုပွဲစဉ်တွင် အထက်ပါ {len(unique_c)} ကွက်အား ထိုးပါ။</div>
+</div>
+"""
+                                live_signals_results.append(msg)
+                                top_summary_pool.update(unique_c)
                                 found_match_for_trigger = True
-                                found_global_chain = True
-                                
-                                badges_b = " ".join([f"<span class='badge-inline-hp' style='margin-bottom:8px;'>{n}</span>" for n in top_b])
-                                badges_c = " ".join([f"<span style='background-color:#E67E22; color:#FFFFFF; padding:4px 10px; border-radius:6px; font-size:16px; font-weight:bold; margin-right:5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>{n}</span>" for n in unique_c])
-                                
-                                st.markdown(f"""
-                                <div class="card card-sniper" style="border-left-color: #e74c3c;">
-                                    <div style="color:#00FFCC; font-size:16px; font-weight:bold; margin-bottom:10px;">
-                                        💎 100% Strict Chain [Rank Score: {p['score']}] | Trend: {trend_req} ကြိမ် | Size: {size_req} ကွက်
-                                    </div>
-                                    <div style="color:#E0D5FA; margin-bottom:15px; line-height: 1.6; border-bottom: 1px dashed #4A3B69; padding-bottom: 10px;">
-                                        <b>A ➡️ B:</b> [<b>{trig_display}</b>] ထွက်ပြီးတိုင်း <b>({chain_span1})</b> ပွဲအတွင်း ဤဂဏန်းများ 100% ဝင်လေ့ရှိသည် -<br>
-                                        <div style="margin-top: 8px;">{badges_b}</div>
-                                    </div>
-                                    <div style="color:#E0D5FA; margin-bottom:15px; line-height: 1.6;">
-                                        <b>B ➡️ C:</b> ထိုဂဏန်း ဝင်လာပြီး <b>({check_step})</b> ပွဲမြောက်တိုင်းတွင် ဤဒဲ့ကွက်များသာ 100% ထွက်ထားပါသည် -<br>
-                                        <div style="margin-top: 8px;">{badges_c}</div>
-                                    </div>
-                                    <div style="background: rgba(230, 126, 34, 0.15); border-left: 5px solid #e67e22; padding: 15px; border-radius: 8px; margin-top:15px;">
-                                        <div style="color: #e67e22; font-size: 16px; font-weight: bold; margin-bottom: 5px;">🔥 LIVE SIGNAL (ယခုပွဲစဉ်)</div>
-                                        <div style="color: #E0D5FA; font-size: 14px; line-height: 1.6;">
-                                            လတ်တလော <b>B</b> [<b>{active_signal['b_val']}</b>] ဝင်ထား၍ <b>{active_signal['rem_steps']}</b> ပွဲ အကြာတွင် အထက်ပါ {len(unique_c)} ကွက်အား ထိုးရန် အသင့်ပြင်ပါ။
-                                        </div>
-                                    </div>
-                                </div>
-                                """, unsafe_allow_html=True)
-                                
-                                break # Stop searching target steps for this priority
+                                break 
 
-                if not found_global_chain:
-                    st.info("⚠️ ယခုအချိန်တွင် A ➡️ B ➡️ C (100%) စည်းမျဉ်းနှင့် ကိုက်ညီပြီး အသက်ဝင်နေသော ရက်ချိန်းပြည့် (Live Signal) ကွင်းဆက်များ မတွေ့ရှိပါ။")
-
-else:
-    st.info("စတင်ရန်အတွက် Bro ရဲ့ 2D CSV သို့မဟုတ် Excel ဒေတာဖိုင်ကို အပေါ်တွင် တင်ပေးပါ။")
+                # ==========================================
+                # TOP SUMMARY DISPLAY
+                # ==========================================
+                if top_summary_pool:
+                    st.markdown("### 🎯 ယခုပွဲစဉ်အတွက် ထိုးရမည့် ဂဏန်းများ (Summary)")
+                    badges_summary = " ".join([f"<span style='background-color:#FFD700; color:#000000; padding:8px 16px; border-radius:8px; font-size:20px; font-weight:bold; margin-right:8px; margin-bottom:8px; display:inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'>{n}</span>" for n in sorted(top_summary_pool)])
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, #1e0a3c 0%, #0B031A 100%); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 2px solid #A078FF; text-align: center;">
+                        <div style="color:#E0D5FA; font-size:16px; margin-bottom:15px;">အောက်ပါ ကွင်းဆက် အထောက်အထားများအရ စုစုပေါင်း ({len(top_summary_pool)}) ကွက် ထိုးရန်ရှိပါသည်-</div>
+                        <div>{badges_summary}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.markdown("#### 📜 ကွင်းဆက် အထောက်အထား အသေးစိတ်များ")
+                    for html_msg in live_signals_results:
+                        st.markdown(html_msg, unsafe_allow_html=True)
+                else:
+                    st.info("⚠️ ယခုအချိန်တွင် 100% စည်းမျဉ်းနှင့် ကိုက်ညီပြီး အသက်ဝင်နေသော ရက်ချိန်းပြည့် (Live Signal) များ မတွေ့ရှိပါ။ ဂဏန်းမရှိသဖြင့် အနားယူသင့်သော ပွဲစဉ်ဖြစ်ပါသည်။")
