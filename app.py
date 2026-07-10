@@ -35,7 +35,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-title">🤖 THE PERFECT 2D AI MASTER (V35.10)</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">Dual-Scanner Engine | Omni-Chain Pattern Classifier</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">Dual-Scanner Engine | A ➡️ B ➡️ C Auto-Tuned Omni-Chain</div>', unsafe_allow_html=True)
 
 # Session State Memory Setup
 if 'full_draws' not in st.session_state: st.session_state.full_draws = None
@@ -177,7 +177,7 @@ def get_group_relation(d1, d2):
     except: return None
 
 # ==========================================
-# REFACTORED: TAB 2 CUSTOM ENGINE (Used by Tab 1 & Tab 2)
+# REFACTORED: CUSTOM ENGINE (Used by All Tabs)
 # ==========================================
 def get_custom_target_hits(clean_trigger, target_session_trigger, full_draws, day_pairs):
     target_hits = []
@@ -377,7 +377,7 @@ def get_custom_target_hits(clean_trigger, target_session_trigger, full_draws, da
     return target_hits, override_session
 
 # ==========================================
-# AUTO PATTERN DETECTION (With Display Labels)
+# AUTO PATTERN DETECTION 
 # ==========================================
 def detect_active_patterns(day_pairs, lookback_draws):
     active_patterns = set()
@@ -422,7 +422,7 @@ def detect_active_patterns(day_pairs, lookback_draws):
     return list(active_patterns)
 
 # ==========================================
-# MASTER ROUTINE: V35.10 INTERSECTION ENGINE
+# MASTER ROUTINE: V35.10 INTERSECTION ENGINE (Tab 1 & 2)
 # ==========================================
 def execute_analysis(target_hits, full_draws, requested_max_step, is_custom_tab=False, search_session="All", custom_trigger="", mode="AI Trend", is_research_mode=False, min_rate_threshold=90.0):
     step_buckets = {step: {} for step in range(1, requested_max_step + 1)}
@@ -594,8 +594,7 @@ if st.session_state.full_draws:
     """, unsafe_allow_html=True)
     st.write("---")
 
-    # 🔴 [FIXED] Tab (3) ကို ထည့်သွင်းထားပါသည်
-    tab_live, tab_custom, tab_chain = st.tabs(["⚡ VIP Tracker (ယခုပွဲစဉ်)", "🔍 Pair-Engine (Custom သုတေသန)", "🔗 Omni-Chain Lab (ကွင်းဆက်)"])
+    tab_live, tab_custom, tab_chain = st.tabs(["⚡ VIP Tracker", "🔍 Pair-Engine", "🔗 Omni-Chain (A➡️B➡️C)"])
 
     # ------------------------------------------
     # TAB 1: LIVE AUTO TRACKER (DUAL SCANNER)
@@ -633,7 +632,6 @@ if st.session_state.full_draws:
                     
                     for past_obj in selected_anchors:
                         p_val, p_time, p_day = past_obj['draw'], past_obj['time'], past_obj['day']
-                        
                         is_double = (len(p_val) == 2 and p_val[0] == p_val[1])
                         r_label = p_val if is_double else f"{p_val}R"
                         
@@ -666,9 +664,7 @@ if st.session_state.full_draws:
                         
                         for step_dist, formulas_dict in step_res.items():
                             for mk, mv in formulas_dict.items():
-                                if p.get('strict_100', False):
-                                    if mv['rate'] < 100.0 or mv['max_span'] > 10:
-                                        continue 
+                                if p.get('strict_100', False) and (mv['rate'] < 100.0 or mv['max_span'] > 10): continue 
                                 
                                 f_key = mv['pure']
                                 if f_key not in scoring_pool:
@@ -844,41 +840,34 @@ if st.session_state.full_draws:
                                             {data.get('risk_note', '')}
                                         </div>
                                         """, unsafe_allow_html=True)
-    
+
     # ------------------------------------------
-    # TAB 3: OMNI-CHAIN ENGINE (Auto/Custom)
+    # TAB 3: AUTO-TUNED OMNI-CHAIN ENGINE (A ➡️ B ➡️ C)
     # ------------------------------------------
     with tab_chain:
-        st.markdown("##### 🔗 Auto Omni-Chain Engine (အလိုအလျောက် ကွင်းဆက် ဓာတ်ခွဲခန်း)")
+        st.markdown("##### 🔗 Auto-Tuned Omni-Chain (A ➡️ B ➡️ C Intersection)")
         with st.form("chain_reaction_form"):
-            chain_mode = st.radio("🔍 အစပျိုးစနစ် ရွေးချယ်ရန်:", ["🤖 Auto Mode (Deep Sniper ဖြင့် အလိုအလျောက်ရှာမည်)", "✍️ Custom Mode (မိမိစိတ်ကြိုက် အစပျိုးမည်)"])
+            chain_mode = st.radio("🔍 အစပျိုးစနစ် (Trigger Type) ရွေးချယ်ရန်:", ["🤖 Auto Mode (Deep Sniper ဖြင့် အလိုအလျောက်ရှာမည်)", "✍️ Custom Mode (မိမိစိတ်ကြိုက် အစပျိုးမည်)"])
             
             c1, c2 = st.columns(2)
             with c1: 
-                chain_anchor_count = st.number_input("📌 (Auto) နောက်ကြောင်းပြန်မည့် ပွဲစဉ် (Anchor Count):", min_value=1, max_value=50, value=10)
-                chain_trigger_custom = st.text_input("🎯 (Custom) အစပျိုး မူ (Primary Trigger):", value=f"{last_val if st.session_state.full_draws else '12'} PM သီးသန့်")
-            with c2: chain_span1 = st.number_input("၂။ စောင့်ကြည့်မည့် ပွဲစဉ် (Secondary Window):", min_value=1, max_value=30, value=10)
+                chain_anchor_count = st.number_input("📌 (Auto) နောက်ကြောင်းပြန်မည့် ပွဲစဉ် (Anchor):", min_value=1, max_value=50, value=10)
+                chain_trigger_custom = st.text_input("🎯 (Custom) အစပျိုး မူ (Primary Trigger A):", value=f"{last_val if st.session_state.full_draws else '12'} PM သီးသန့်")
+            with c2: 
+                chain_span1 = st.number_input("၂။ 'B' အတွက် စောင့်ကြည့်မည့် ပွဲစဉ် (Span 1):", min_value=1, max_value=30, value=10)
+                chain_max_target_step = st.number_input("၃။ 'C' အတွက် Auto ရှာမည့် Target Step (Span 2):", min_value=1, max_value=20, value=5)
 
-            c3, c4 = st.columns(2)
-            with c3: chain_max_target_step = st.number_input("၃။ Auto ရှာမည့် အများဆုံး Target Step:", min_value=1, max_value=20, value=5)
-            with c4: chain_recent_limit = st.number_input("၄။ ရေစီးကြောင်း အကြိမ်ရေ (Trend Hits):", min_value=3, max_value=50, value=5)
-
-            c5, c6 = st.columns(2)
-            with c5: cluster_size = st.number_input("၅။ Cluster အုပ်စု အရွယ်အစား (Top N):", min_value=1, max_value=15, value=10)
-            with c6: max_final_kwek = st.number_input("၆။ အများဆုံး ပြသရမည့် ဒဲ့ကွက် (Filter):", min_value=1, max_value=10, value=5)
-
-            show_only_live = st.checkbox("🔥 ယခုပွဲစဉ်အတွက် ရက်ချိန်းပြည့် (Live Signals) ရှိသော ကွင်းဆက်များကိုသာ ပြရန် (ဂဏန်းမဖောင်းပွစေရန်)", value=True)
-
-            submit_chain = st.form_submit_button("ကွင်းဆက်ကို ရှာဖွေမည် 🚀")
+            st.info("💡 AI သည် Trend 10 ကြိမ်မှ 5 ကြိမ်အထိ လည်းကောင်း၊ ကွက်ရေ 1 ကွက်မှ 5 ကွက်အထိ လည်းကောင်း အလိုအလျောက် (Auto-Tuning) ပြုလုပ်ပြီး အကောင်းဆုံး (1) စုံကိုသာ စစ်ထုတ်ပေးပါမည်။")
+            
+            submit_chain = st.form_submit_button("🔥 အကောင်းဆုံး Live Signal ကွင်းဆက်များကို ရှာမည် 🚀")
 
         if submit_chain:
-            with st.spinner("Omni-Chain Scanner ဖြင့် ကွင်းဆက်များကို အလိုအလျောက် တူးဖော်နေပါသည်..."):
+            with st.spinner("🧠 ဉာဏ်ရည်တု အင်ဂျင်မှ Custom Ranked Path ဖြင့် အကျစ်လစ်ဆုံး ကွင်းဆက်များကို ရှာဖွေနေပါသည်..."):
                 trigger_list = []
                 
                 if "Auto Mode" in chain_mode:
                     active_pats = detect_active_patterns(st.session_state.day_pairs, chain_anchor_count)
                     for pat_search, pat_display in active_pats:
-                        # 🔴 [FIX] Display Name ပေါ်မူတည်ပြီး AM / PM သီးသန့် အတိအကျ ခွဲထုတ်ပေးခြင်း
                         sess = "All"
                         if "မနက်ပိုင်း" in pat_display: sess = "AM သီးသန့်"
                         elif "ညနေပိုင်း" in pat_display: sess = "PM သီးသန့်"
@@ -887,12 +876,10 @@ if st.session_state.full_draws:
                     recent_draws = st.session_state.full_draws[-chain_anchor_count:]
                     for d in recent_draws:
                         d_val, d_time = d['draw'], d['time']
-                        # 🔴 [FIX] အမာခံဂဏန်းများကိုလည်း သက်ဆိုင်ရာ အချိန် (AM/PM) အတိအကျဖြင့် ရှာဖွေစေခြင်း
                         trigger_list.append((d_val, f"လတ်တလော အမာခံဂဏန်း ({d_val} {d_time})", f"{d_time} သီးသန့်"))
                         
                     trigger_list = list(set(trigger_list))
                 else:
-                    # 🔴 [FIX] Custom Mode တွင် AM / PM သီးသန့် ရိုက်ထည့်ပါက ခွဲခြားသိရှိနိုင်ရန်
                     raw_trig = chain_trigger_custom.strip()
                     sess = "All"
                     if "AM သီးသန့်" in raw_trig: 
@@ -903,110 +890,106 @@ if st.session_state.full_draws:
                         raw_trig = raw_trig.replace("PM သီးသန့်", "").strip()
                     trigger_list = [(raw_trig, chain_trigger_custom.strip(), sess)]
 
-                found_any_chain = False
+                # 🔴 [NEW] Custom Ranked Priorities (Score = Trend*10 - Size*5)
+                priorities = []
+                for t in range(10, 4, -1):  # Trend from 10 down to 5
+                    for s in range(1, 6):   # Size from 1 up to 5
+                        score = (t * 10) - (s * 5)
+                        priorities.append({'trend': t, 'size': s, 'score': score})
+                priorities = sorted(priorities, key=lambda x: x['score'], reverse=True)
+
+                found_global_chain = False
 
                 for trig_search, trig_display, session_scope in trigger_list:
-                    # 🔴 [FIX] "All" အစား သက်ဆိုင်ရာ session_scope ကို Engine ဆီသို့ ထည့်သွင်းရှာဖွေခြင်း
                     t_hits, _ = get_custom_target_hits(trig_search, session_scope, st.session_state.full_draws, st.session_state.day_pairs)
                     
-                    if len(t_hits) < chain_recent_limit:
-                        continue 
-
-                    cluster_pool = []
-                    for h in t_hits:
-                        h_idx = h['index']
-                        window_draws = st.session_state.full_draws[h_idx + 1 : min(h_idx + 1 + chain_span1, len(st.session_state.full_draws))]
-                        cluster_pool.extend([d['draw'] for d in window_draws])
-
-                    if not cluster_pool: continue
-
-                    top_cluster = [x[0] for x in Counter(cluster_pool).most_common(cluster_size)]
-
-                    valid_chains = []
-                    for h in t_hits:
-                        h_idx = h['index']
-                        window_draws = st.session_state.full_draws[h_idx + 1 : min(h_idx + 1 + chain_span1, len(st.session_state.full_draws))]
-                        for d in window_draws:
-                            if d['draw'] in top_cluster:
-                                valid_chains.append({"trigger_idx": h_idx, "cluster_idx": d['index'], "cluster_val": d['draw']})
-                                break 
-
-                    if len(valid_chains) < chain_recent_limit:
-                        continue 
-
-                    recent_chains = valid_chains[-chain_recent_limit:]
+                    found_match_for_trigger = False
                     
-                    best_steps_data = []
-                    for check_step in range(1, chain_max_target_step + 1):
-                        target_draws = []
-                        active_signal = None
-
-                        for ch in recent_chains:
-                            target_idx = ch['cluster_idx'] + check_step
-                            if target_idx < len(st.session_state.full_draws):
-                                target_draws.append(st.session_state.full_draws[target_idx]['draw'])
-                            else:
-                                rem_steps = target_idx - (len(st.session_state.full_draws) - 1)
-                                active_signal = {"cluster_val": ch['cluster_val'], "rem_steps": rem_steps}
-
-                        final_unique_hits = list(set(target_draws))
+                    for p in priorities:
+                        if found_match_for_trigger: break
                         
-                        if final_unique_hits and len(final_unique_hits) <= max_final_kwek:
-                            if show_only_live and not active_signal:
-                                continue 
+                        trend_req = p['trend']
+                        size_req = p['size']
+                        
+                        if len(t_hits) < trend_req: continue 
+                        
+                        recent_A = t_hits[-trend_req:]
+                        
+                        # Step 1: Strict Intersection for B (Must hit in ALL trend_req windows)
+                        b_sets = []
+                        for h in recent_A:
+                            h_idx = h['index']
+                            window = [d['draw'] for d in st.session_state.full_draws[h_idx + 1 : min(h_idx + 1 + chain_span1, len(st.session_state.full_draws))]]
+                            b_sets.append(set(window))
+                            
+                        common_b = set.intersection(*b_sets)
+                        if not common_b: continue # Skip if no 100% target B exists
+                        
+                        # Limit common_b to size_req by frequency
+                        b_flat = [d['draw'] for h in recent_A for d in st.session_state.full_draws[h['index'] + 1 : min(h['index'] + 1 + chain_span1, len(st.session_state.full_draws))] if d['draw'] in common_b]
+                        top_b = [x[0] for x in Counter(b_flat).most_common(size_req)]
+                        
+                        # Step 2: Track C from the FIRST occurrence of B in those windows
+                        valid_chains = []
+                        for h in recent_A:
+                            h_idx = h['index']
+                            for d in st.session_state.full_draws[h_idx + 1 : min(h_idx + 1 + chain_span1, len(st.session_state.full_draws))]:
+                                if d['draw'] in top_b:
+                                    valid_chains.append({"trigger_idx": h_idx, "b_idx": d['index'], "b_val": d['draw']})
+                                    break 
+                                    
+                        if len(valid_chains) < trend_req: continue
+                        
+                        # Step 3: Check target steps for C (Strict Intersection)
+                        for check_step in range(1, chain_max_target_step + 1):
+                            target_draws = []
+                            active_signal = None
+                            
+                            for ch in valid_chains:
+                                target_idx = ch['b_idx'] + check_step
+                                if target_idx < len(st.session_state.full_draws):
+                                    target_draws.append(st.session_state.full_draws[target_idx]['draw'])
+                                else:
+                                    rem_steps = target_idx - (len(st.session_state.full_draws) - 1)
+                                    active_signal = {"b_val": ch['b_val'], "rem_steps": rem_steps}
+                                    
+                            unique_c = list(set(target_draws))
+                            
+                            # 🔴 MATCH CONDITION: C size must be <= size_req AND it MUST be an active LIVE SIGNAL!
+                            if unique_c and len(unique_c) <= size_req and active_signal:
                                 
-                            best_steps_data.append({
-                                "step": check_step,
-                                "hits": final_unique_hits,
-                                "signal": active_signal
-                            })
-
-                    if best_steps_data:
-                        found_any_chain = True
-                        badges_cluster = " ".join([f"<span class='badge-inline-hp' style='margin-bottom:8px;'>{n}</span>" for n in top_cluster])
-                        
-                        for step_data in best_steps_data:
-                            final_hits = step_data["hits"]
-                            step_num = step_data["step"]
-                            signal = step_data["signal"]
-                            
-                            badges_final = " ".join([f"<span style='background-color:#E67E22; color:#FFFFFF; padding:4px 10px; border-radius:6px; font-size:16px; font-weight:bold; margin-right:5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>{n}</span>" for n in final_hits])
-                            card_header_color = "#e74c3c" if signal else "#3498db"
-                            
-                            with st.expander(f"⭐ [100% Chain] {trig_display} ➡️ {step_num} ပွဲမြောက် (ကွက်ရေ: {len(final_hits)})", expanded=True if signal else False):
+                                found_match_for_trigger = True
+                                found_global_chain = True
+                                
+                                badges_b = " ".join([f"<span class='badge-inline-hp' style='margin-bottom:8px;'>{n}</span>" for n in top_b])
+                                badges_c = " ".join([f"<span style='background-color:#E67E22; color:#FFFFFF; padding:4px 10px; border-radius:6px; font-size:16px; font-weight:bold; margin-right:5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>{n}</span>" for n in unique_c])
+                                
                                 st.markdown(f"""
-<div class="card card-sniper" style="border-left-color: {card_header_color};">
-    <div style="color:#00FFCC; font-size:16px; font-weight:bold; margin-bottom:10px;">
-        📌 အဆင့် (၁) - Auto Cluster (Top {cluster_size})
-    </div>
-    <div style="color:#E0D5FA; margin-bottom:15px; line-height: 1.6;">
-        [<b>{trig_display}</b>] ထွက်ပြီး <b>({chain_span1})</b> ပွဲအတွင်း လာလေ့ရှိသော အုပ်စု -<br>
-        <div style="margin-top: 8px;">{badges_cluster}</div>
-    </div>
-    <div style="color:#00FFCC; font-size:16px; font-weight:bold; margin-bottom:10px; border-top: 1px dashed #4A3B69; padding-top:15px;">
-        🎯 အဆင့် (၂) - Target Step (<b>{step_num}</b> ပွဲမြောက်)
-    </div>
-    <div style="color:#E0D5FA; margin-bottom:15px; line-height: 1.6;">
-        ထိုအုပ်စုဝင်လာပြီး <b>({step_num})</b> ပွဲမြောက်တိုင်းတွင် (လတ်တလော {chain_recent_limit} ကြိမ်ဆက်တိုက်) ဤဂဏန်းများသာ 100% ထွက်ထားပါသည်:
-    </div>
-    <div>
-        {badges_final}
-    </div>
-</div>
-""", unsafe_allow_html=True)
+                                <div class="card card-sniper" style="border-left-color: #e74c3c;">
+                                    <div style="color:#00FFCC; font-size:16px; font-weight:bold; margin-bottom:10px;">
+                                        💎 100% Strict Chain [Rank Score: {p['score']}] | Trend: {trend_req} ကြိမ် | Size: {size_req} ကွက်
+                                    </div>
+                                    <div style="color:#E0D5FA; margin-bottom:15px; line-height: 1.6; border-bottom: 1px dashed #4A3B69; padding-bottom: 10px;">
+                                        <b>A ➡️ B:</b> [<b>{trig_display}</b>] ထွက်ပြီးတိုင်း <b>({chain_span1})</b> ပွဲအတွင်း ဤဂဏန်းများ 100% ဝင်လေ့ရှိသည် -<br>
+                                        <div style="margin-top: 8px;">{badges_b}</div>
+                                    </div>
+                                    <div style="color:#E0D5FA; margin-bottom:15px; line-height: 1.6;">
+                                        <b>B ➡️ C:</b> ထိုဂဏန်း ဝင်လာပြီး <b>({check_step})</b> ပွဲမြောက်တိုင်းတွင် ဤဒဲ့ကွက်များသာ 100% ထွက်ထားပါသည် -<br>
+                                        <div style="margin-top: 8px;">{badges_c}</div>
+                                    </div>
+                                    <div style="background: rgba(230, 126, 34, 0.15); border-left: 5px solid #e67e22; padding: 15px; border-radius: 8px; margin-top:15px;">
+                                        <div style="color: #e67e22; font-size: 16px; font-weight: bold; margin-bottom: 5px;">🔥 LIVE SIGNAL (ယခုပွဲစဉ်)</div>
+                                        <div style="color: #E0D5FA; font-size: 14px; line-height: 1.6;">
+                                            လတ်တလော <b>B</b> [<b>{active_signal['b_val']}</b>] ဝင်ထား၍ <b>{active_signal['rem_steps']}</b> ပွဲ အကြာတွင် အထက်ပါ {len(unique_c)} ကွက်အား ထိုးရန် အသင့်ပြင်ပါ။
+                                        </div>
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                                
+                                break # Stop searching target steps for this priority
 
-                                if signal:
-                                    st.markdown(f"""
-<div style="background: rgba(230, 126, 34, 0.15); border-left: 5px solid #e67e22; padding: 20px; border-radius: 8px; margin-top:15px; border: 1px solid rgba(230, 126, 34, 0.3);">
-    <div style="color: #e67e22; font-size: 18px; font-weight: bold; margin-bottom: 8px;">🔥 LIVE SIGNAL (ယခုပွဲစဉ်အတွက်)</div>
-    <div style="color: #E0D5FA; font-size: 15px; line-height: 1.6;">
-        လတ်တလော Cluster [<b>{signal['cluster_val']}</b>] ဝင်ထား၍ <b>{signal['rem_steps']}</b> ပွဲ အကြာတွင် အထက်ပါ {len(final_hits)} ကွက်အား ထိုးရန် အသင့်ပြင်ပါ။
-    </div>
-</div>
-""", unsafe_allow_html=True)
+                if not found_global_chain:
+                    st.info("⚠️ ယခုအချိန်တွင် A ➡️ B ➡️ C (100%) စည်းမျဉ်းနှင့် ကိုက်ညီပြီး အသက်ဝင်နေသော ရက်ချိန်းပြည့် (Live Signal) ကွင်းဆက်များ မတွေ့ရှိပါ။")
 
-                if not found_any_chain:
-                    if show_only_live:
-                        st.info("⚠️ ယခုအချိန်တွင် ရက်ချိန်းပြည့် (Live Signal) အသက်ဝင်နေသော ကွင်းဆက်များ မတွေ့ရှိပါ။ (သမိုင်းကြောင်း အဟောင်းများကို ကြည့်လိုပါက Checkbox ကို ဖြုတ်၍ ရှာပါ)")
-                    else:
-                        st.info("⚠️ သတ်မှတ်ထားသော (ကွက်ရေ ကန့်သတ်ချက်) နှင့် 100% ကိုက်ညီသော ကွင်းဆက်များ မတွေ့ပါ။")
+else:
+    st.info("စတင်ရန်အတွက် Bro ရဲ့ 2D CSV သို့မဟုတ် Excel ဒေတာဖိုင်ကို အပေါ်တွင် တင်ပေးပါ။")
